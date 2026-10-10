@@ -35,11 +35,12 @@
       <button class="btn primary" type="submit">Tìm</button>
       <button class="btn" type="button" id="clearSearch">Xóa tìm kiếm</button>
     </div>
-    <p class="hint">Có thể gõ nhiều từ cùng lúc, ví dụ <i>“Anna Lang 2026”</i> hoặc <i>“Phêrô Tâm”</i>. Không cần gõ dấu.</p>
+    <p class="hint">Chữ cuối cùng được hiểu là <b>tên gọi</b>: gõ <i>“Hưng”</i> chỉ ra người tên Hưng, không ra người có Hưng ở họ hay tên lót. Có thể gõ thêm tên thánh, họ, năm mất: <i>“Phêrô Tâm 2026”</i>. Gõ có dấu thì tìm đúng dấu; gõ không dấu (<i>Hung</i>) sẽ ra cả Hưng, Hùng.</p>
     <button class="toggle" type="button" id="toggleFilters" aria-expanded="false">▸ Lọc chi tiết theo từng mục</button>
     <div class="filters" id="filters" hidden>
       <div class="field"><label for="f_tenThanh">Tên thánh</label><input id="f_tenThanh" data-k="tenThanh"></div>
-      <div class="field"><label for="f_hoTen">Họ tên người đã khuất</label><input id="f_hoTen" data-k="hoTen"></div>
+      <div class="field"><label for="f_ten">Tên gọi (chữ cuối)</label><input id="f_ten" data-k="ten" placeholder="vd: Hưng"></div>
+      <div class="field"><label for="f_hoTen">Họ tên (có chứa)</label><input id="f_hoTen" data-k="hoTen" placeholder="vd: Nguyễn Văn"></div>
       <div class="field"><label for="f_namSinh">Năm sinh</label><input id="f_namSinh" data-k="namSinh" placeholder="1935 hoặc 1930-1940" inputmode="numeric"></div>
       <div class="field"><label for="f_namMat">Năm mất</label><input id="f_namMat" data-k="namMat" placeholder="2026 hoặc 2020-2026" inputmode="numeric"></div>
       <div class="field"><label for="f_lienHe">Người liên hệ</label><input id="f_lienHe" data-k="lienHe"></div>
@@ -62,12 +63,24 @@ const $=id=>document.getElementById(id);
 const FIELDS=["tenThanh","hoTen","namSinh","namMat","viTri","lienHe","sdt","diaChi","ghiChu"];
 let DATA={verse:{text:"",ref:""},parish:{},rows:[]}, ROWS=[], loadError=false;
 
+/* Chữ thường, giữ dấu (để phân biệt Hưng / Hùng khi người dùng gõ có dấu) */
+const low=s=>String(s??"").normalize("NFC").toLowerCase().trim();
+const hasMarks=t=>norm(t)!==t;            // t đã là chữ thường có dấu
+const splitWords=s=>low(s).split(/[\s,;:()]+/).filter(Boolean);
+/* So một từ người dùng gõ với một từ trong dữ liệu:
+   gõ có dấu → phải đúng dấu; gõ không dấu → bỏ qua dấu */
+const sameWord=(tok,w)=>hasMarks(tok)?tok===w:tok===norm(w);
+
 function index(rows){return rows.map(r=>{
   const o={};FIELDS.forEach(k=>o[k]=String(r[k]??"").trim());
   o.sdt=maskPhones(o.sdt);                 // phòng khi file chưa được che
   o._hay=norm(FIELDS.filter(k=>k!=="sdt").map(k=>o[k]).join(" | "));
   o._dig=digits(o.sdt); o._ys=year(o.namSinh); o._ym=year(o.namMat);
+  const nw=splitWords(o.hoTen); o._given=nw.length?nw[nw.length-1]:"";   // tên gọi = chữ cuối
+  o._words=["tenThanh","hoTen","lienHe","diaChi","viTri","ghiChu"].flatMap(k=>splitWords(o[k]));
   return o;})}
+const hasWord=(tok,r)=>r._words.some(w=>sameWord(tok,w));
+const isGiven=(tok,r)=>!!r._given&&sameWord(tok,r._given);
 
 async function load(){
   try{
@@ -85,34 +98,58 @@ function yearMatch(want,y){
   const m=want.match(/^(\d{4})[-–](\d{4})$/); if(m) return y>=+m[1]&&y<=+m[2];
   return String(y).startsWith(want);
 }
-function tokenMatch(t,r){
-  if(/^\d+$/.test(t)){
-    if(t.length===4 && (r._ys==+t||r._ym==+t)) return true;
-    if(t.length>=4 && r._dig.includes(t)) return true;
+/* Từ có chữ số hoặc dấu chấm (năm, mã số B.24, số nhà) → dò như cũ */
+function codeMatch(t,r){
+  const n=norm(t);
+  if(/^\d+$/.test(n)){
+    if(n.length===4 && (r._ys==+n||r._ym==+n)) return true;
+    if(n.length>=4 && r._dig.includes(n)) return true;
   }
-  return r._hay.includes(t);
+  return r._hay.includes(n);
 }
+function filtersOk(r,f){
+  for(const k in f){const v=f[k];
+    if(k==="namSinh"){if(!yearMatch(v,r._ys)) return false;}
+    else if(k==="namMat"){if(!yearMatch(v,r._ym)) return false;}
+    else if(k==="sdt"){const d=digits(v); if(d && !r._dig.includes(d)) return false;}
+    else if(k==="ten"){ if(!splitWords(v).every(t=>isGiven(t,r))) return false; }
+    else if(k==="hoTen"){if(!norm(r.tenThanh+" "+r.hoTen).includes(norm(v))) return false;}
+    else if(!norm(r[k]).includes(norm(v))) return false;}
+  return true;
+}
+let MODE="";   // "given": khớp đúng tên gọi · "loose": không ai mang tên đó, đang hiện người có chữ đó ở chỗ khác
 function run(){
-  const q=norm($("q").value); const toks=q?q.split(" "):[];
+  const toks=splitWords($("q").value);
+  const codeToks=toks.filter(t=>/[\d.\/]/.test(t));
+  const textToks=toks.filter(t=>!/[\d.\/]/.test(t));
   const f={}; document.querySelectorAll("#filters input").forEach(i=>{if(i.value.trim()) f[i.dataset.k]=i.value.trim()});
   const any=toks.length||Object.keys(f).length;
-  const out=!any?[]:ROWS.filter(r=>{
-    if(!toks.every(t=>tokenMatch(t,r))) return false;
-    for(const k in f){const v=f[k];
-      if(k==="namSinh"){if(!yearMatch(v,r._ys)) return false;}
-      else if(k==="namMat"){if(!yearMatch(v,r._ym)) return false;}
-      else if(k==="sdt"){const d=digits(v); if(d && !r._dig.startsWith(d) && !r._dig.includes(d)) return false;}
-      else if(k==="tenThanh"||k==="hoTen"){if(!norm(r.tenThanh+" "+r.hoTen).includes(norm(v))) return false;}
-      else if(!norm(r[k]).includes(norm(v))) return false;}
-    return true;});
-  render(out,any,toks,f);
+  MODE="";
+  let out=[];
+  if(any){
+    const base=ROWS.filter(r=>codeToks.every(t=>codeMatch(t,r)) && filtersOk(r,f));
+    if(textToks.length){
+      // Chữ cuối cùng gõ vào được hiểu là TÊN GỌI; các chữ khác (tên thánh, họ, tên lót…) khớp nguyên từ
+      const nameTok=textToks[textToks.length-1], rest=textToks.slice(0,-1);
+      out=base.filter(r=>isGiven(nameTok,r) && rest.every(t=>hasWord(t,r)));
+      MODE="given";
+      if(!out.length){ out=base.filter(r=>textToks.every(t=>hasWord(t,r))); MODE=out.length?"loose":"given"; }
+    } else out=base;
+  }
+  render(out,any,textToks.concat(codeToks),f);
 }
-function hl(text,terms){
+/* Tô sáng nguyên từ khớp; onlyLast: chỉ xét chữ cuối (tên gọi) */
+function hl(text,terms,onlyLast){
   const s=String(text??""); if(!terms.length||!s) return esc(s);
-  const n=norm(s); if(n.length!==s.length) return esc(s);
-  const marks=new Array(s.length).fill(false);
-  terms.forEach(t=>{if(!t||/^\d+$/.test(t)&&t.length<4)return;let i=n.indexOf(t);while(i>-1){for(let j=i;j<i+t.length;j++)marks[j]=true;i=n.indexOf(t,i+t.length);}});
-  let o="",on=false;for(let i=0;i<s.length;i++){if(marks[i]!==on){o+=marks[i]?"<mark>":"</mark>";on=marks[i];}o+=esc(s[i]);}return o+(on?"</mark>":"");
+  const parts=s.split(/(\s+)/); let lastIdx=-1;
+  parts.forEach((p,i)=>{if(p.trim())lastIdx=i;});
+  return parts.map((p,i)=>{
+    if(!p.trim()) return p;
+    if(onlyLast && i!==lastIdx) return esc(p);
+    const w=low(p).replace(/^[,;:()]+|[,;:()]+$/g,"");
+    const hit=terms.some(t=>/[\d.\/]/.test(t)?norm(p).includes(norm(t)):sameWord(t,w));
+    return hit?`<mark>${esc(p)}</mark>`:esc(p);
+  }).join("");
 }
 function render(list,any,toks,f){
   const box=$("results"),total=ROWS.length,fmt=n=>n.toLocaleString("vi-VN");
@@ -120,22 +157,31 @@ function render(list,any,toks,f){
   if(!total){$("count").textContent="Chưa có dữ liệu";box.innerHTML=`<div class="empty"><p class="pray">Danh sách đang được cập nhật.</p><p>Xin vui lòng quay lại sau.</p></div>`;return;}
   if(!any){$("count").innerHTML=`Danh sách có <b>${fmt(total)}</b> người`;
     box.innerHTML=`<div class="empty"><p class="pray">“Xin cho các linh hồn được nghỉ yên muôn đời.”</p><p>Nhập tên, tên thánh, năm mất hoặc mã số để tìm vị trí hài cốt.</p></div>`;return;}
-  $("count").innerHTML=`Tìm thấy <b>${fmt(list.length)}</b> / ${fmt(total)} người`;
-  if(!list.length){box.innerHTML=`<div class="empty"><p class="pray">Không tìm thấy kết quả phù hợp.</p><p>Thử bớt một từ, gõ không dấu, hoặc chỉ nhập tên và năm mất.</p></div>`;return;}
-  const terms=toks.concat(Object.keys(f).filter(k=>!["namSinh","namMat","sdt"].includes(k)).map(k=>norm(f[k])));
+  const textToks=toks.filter(t=>!/[\d.\/]/.test(t));
+  const nameTok=textToks[textToks.length-1]||"";
+  $("count").innerHTML=`Tìm thấy <b>${fmt(list.length)}</b> / ${fmt(total)} người`+
+    (MODE==="given"&&nameTok&&list.length?` có tên gọi <b>${esc(nameTok)}</b>`:"")+
+    (MODE==="loose"?` — <span style="color:var(--gold-ink)">không có ai tên gọi là “${esc(nameTok)}”, đang hiện người có chữ này ở họ, tên lót hoặc địa chỉ</span>`:"");
+  if(!list.length){box.innerHTML=`<div class="empty"><p class="pray">Không tìm thấy kết quả phù hợp.</p><p>Thử gõ không dấu (vd: <i>Hung</i> sẽ ra cả Hưng, Hùng), bớt một từ, hoặc chỉ nhập tên và năm mất.</p></div>`;return;}
+  const fTerms=["ten","hoTen","tenThanh","lienHe","diaChi","viTri"].filter(k=>f[k]).flatMap(k=>splitWords(f[k]));
+  const terms=toks.concat(fTerms);
+  const restTerms=MODE==="given"?toks.filter(t=>t!==nameTok).concat(fTerms):terms;
+  const nameHl=r=>MODE==="given"&&nameTok
+    ? (()=>{const s=r.hoTen||"";const i=s.trimEnd().search(/\S+$/);return i<0?esc(s):hl(s.slice(0,i),restTerms)+hl(s.slice(i),[nameTok],true);})()
+    : hl(r.hoTen||"(không rõ tên)",terms);
   const LIM=200;
   box.innerHTML=list.slice(0,LIM).map(r=>`
     <article class="card">
       <div class="who">
-        ${r.tenThanh?`<div class="saint">${hl(r.tenThanh,terms)}</div>`:""}
-        <div class="name">${hl(r.hoTen||"(không rõ tên)",terms)}</div>
+        ${r.tenThanh?`<div class="saint">${hl(r.tenThanh,restTerms)}</div>`:""}
+        <div class="name">${r.hoTen?nameHl(r):"(không rõ tên)"}</div>
         <div class="years">${r.namSinh?"Sinh "+esc(r.namSinh):""}${r.namSinh&&r.namMat?'<span class="cross">✝</span>':""}${r.namMat?"Mất "+esc(r.namMat):""}</div>
       </div>
-      <div class="loc"><small>Mã số · Vị trí hài cốt</small><strong>${hl(r.viTri||"Chưa ghi",terms)}</strong></div>
+      <div class="loc"><small>Mã số · Vị trí hài cốt</small><strong>${hl(r.viTri||"Chưa ghi",restTerms)}</strong></div>
       ${(r.lienHe||r.sdt||r.diaChi||r.ghiChu)?`<div class="meta">
-        ${r.lienHe?`<span>Liên hệ: <b>${hl(r.lienHe,terms)}</b></span>`:""}
+        ${r.lienHe?`<span>Liên hệ: <b>${hl(r.lienHe,restTerms)}</b></span>`:""}
         ${r.sdt?`<span>ĐT: <b>${esc(r.sdt)}</b></span>`:""}
-        ${r.diaChi?`<span>Địa chỉ: <b>${hl(r.diaChi,terms)}</b></span>`:""}
+        ${r.diaChi?`<span>Địa chỉ: <b>${hl(r.diaChi,restTerms)}</b></span>`:""}
         ${r.ghiChu?`<span>Ghi chú: <b>${esc(r.ghiChu)}</b></span>`:""}
       </div>`:""}
     </article>`).join("")+(list.length>LIM?`<p class="hint" style="text-align:center">Đang hiện ${LIM} kết quả đầu. Hãy thêm năm mất hoặc tên thánh để thu hẹp.</p>`:"");
