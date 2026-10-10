@@ -1,0 +1,100 @@
+/* Tím phụng vụ (tháng các linh hồn) với ánh nến vàng */
+:root{
+  --bg:#f3f2f6; --surface:#ffffff; --ink:#241d33; --muted:#665e78; --line:#dcd8e4;
+  --band:#2d1f45; --band-ink:#f4eefc; --band-muted:#cbbfe0;
+  --gold:#b98a2f; --gold-soft:#f6ecd6; --gold-ink:#6b4c10;
+  --accent:#5b3d8a; --accent-soft:#ece6f5; --danger:#a3322a; --danger-soft:#f8e4e1; --ok:#2f6b45;
+  --display:"Playfair Display", "Noto Serif", Georgia, serif;
+  --body:"Be Vietnam Pro", "Segoe UI", Roboto, Arial, sans-serif;
+  --r:10px; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#16121e; --surface:#211b2c; --ink:#ece7f4; --muted:#a79dba; --line:#3a3149;
+  --band:#120c1c; --band-ink:#f4eefc; --band-muted:#b9abd0;
+  --gold:#e0b45a; --gold-soft:#3a2f1a; --gold-ink:#f2d595;
+  --accent:#b9a0e6; --accent-soft:#2f2543; --danger:#f08a80; --danger-soft:#3d1f1d; --ok:#7fc79a; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+[hidden]{display:none!important}
+
+.band{background:var(--band);color:var(--band-ink);padding:22px 16px 26px;position:relative;overflow:hidden}
+.band::after{content:"";position:absolute;right:-60px;top:-80px;width:260px;height:260px;border-radius:50%;
+  background:radial-gradient(circle,rgba(224,180,90,.28),transparent 65%);pointer-events:none}
+.band-in{max-width:980px;margin:0 auto;display:flex;gap:16px;align-items:flex-start;position:relative;z-index:1}
+.candle{flex:none;width:34px;height:56px;margin-top:2px}
+.flame{transform-origin:17px 18px;animation:flick 2.6s ease-in-out infinite}
+@keyframes flick{0%,100%{transform:scale(1,1)}40%{transform:scale(.92,1.06)}70%{transform:scale(1.05,.95)}}
+@media (prefers-reduced-motion:reduce){.flame{animation:none}}
+.titles{min-width:0;flex:1}
+.parish{display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline;margin:0 0 8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.14)}
+.parish b{font-family:var(--display);font-weight:600;font-size:clamp(17px,2.6vw,22px);color:var(--band-ink)}
+.parish span{color:var(--band-muted);font-size:14px}
+h1{font-family:var(--body);font-weight:700;font-size:clamp(15px,2.6vw,20px);letter-spacing:.06em;margin:0;line-height:1.35;text-wrap:balance}
+h1 .sep{color:var(--gold);margin:0 .35em}
+h1 .sub{color:var(--gold)}
+.verse{margin:12px 0 0;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.verse q{font-family:var(--display);font-style:italic;font-weight:500;font-size:clamp(17px,2.4vw,21px);quotes:"“" "”";color:var(--band-ink);line-height:1.45;max-width:62ch}
+.verse cite{font-style:normal;color:var(--band-muted);font-size:13px;letter-spacing:.04em;white-space:nowrap;align-self:flex-end}
+
+main{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:20px 40px;display:grid;gap:18px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;box-shadow:0 6px 24px -18px rgba(45,31,69,.5)}
+.qrow,.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.qwrap{flex:1 1 280px;position:relative;min-width:0}
+.qwrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+#q{width:100%;padding:13px 14px 13px 40px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);font-size:16px}
+#q:focus{border-color:var(--accent);outline:none}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 16px;cursor:pointer;font-weight:500;white-space:nowrap;text-decoration:none;display:inline-block}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#241a06}
+.btn.danger{color:var(--danger);border-color:var(--danger)}
+.btn.danger.solid{background:var(--danger);color:var(--surface)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.hint{color:var(--muted);font-size:13px;margin:0}
+.toggle{background:none;border:0;color:var(--accent);cursor:pointer;padding:0;font-weight:600;font-size:14px;justify-self:start}
+.filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.field{display:grid;gap:4px;min-width:0}
+.field label{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.field input,.field textarea{padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);width:100%}
+.field input:focus,.field textarea:focus{border-color:var(--accent);outline:none}
+
+.status{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline;color:var(--muted);font-size:14px}
+.status b{color:var(--ink);font-variant-numeric:tabular-nums}
+.results{display:grid;gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;align-items:start}
+.who{min-width:0}
+.saint{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.name{font-family:var(--display);font-size:21px;font-weight:600;line-height:1.25;margin:1px 0 2px}
+.years{font-variant-numeric:tabular-nums;color:var(--muted);font-size:14px}
+.years .cross{color:var(--gold);margin:0 4px}
+.loc{background:var(--gold-soft);color:var(--gold-ink);border:1px solid var(--gold);border-radius:8px;padding:8px 12px;text-align:right;min-width:150px}
+.loc small{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.8}
+.loc strong{font-size:16px;font-variant-numeric:tabular-nums}
+.meta{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 18px;font-size:14px;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px;margin-top:4px}
+.meta span b{color:var(--ink);font-weight:500}
+mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 1px}
+@media (max-width:560px){.card{grid-template-columns:1fr}.loc{text-align:left}}
+.empty{text-align:center;padding:30px 16px;color:var(--muted)}
+.empty p{margin:4px 0}
+.empty .pray{font-family:var(--display);font-style:italic;font-size:18px;color:var(--ink)}
+footer{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:0 32px;color:var(--muted);font-size:13px}
+
+/* Trang quản lý */
+.panel h2{font-family:var(--display);font-size:22px;margin:0}
+.step{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--surface);font-size:13px;font-weight:700;margin-right:8px;vertical-align:2px}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:18px;text-align:center;cursor:pointer;background:var(--bg)}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.msg{font-size:14px;border-radius:8px;padding:8px 12px}
+.msg.ok{background:var(--accent-soft);color:var(--ok)}
+.msg.err{background:var(--danger-soft);color:var(--danger)}
+.confirm{background:var(--danger-soft);border-radius:8px;padding:10px 12px;display:grid;gap:8px;color:var(--danger)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+.tbl table{border-collapse:collapse;width:100%;font-size:13px}
+.tbl th,.tbl td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.tbl th{background:var(--accent-soft);font-weight:600}
+.tbl td.num{font-variant-numeric:tabular-nums}
+ol.howto{margin:0;padding-left:20px;display:grid;gap:4px}
+code{background:var(--accent-soft);padding:1px 6px;border-radius:4px;font-size:13px}

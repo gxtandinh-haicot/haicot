@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tìm Vị Trí Hài Cốt</title>
+<meta name="description" content="Cầu nguyện cho các linh hồn – tra cứu vị trí hài cốt thân nhân theo tên thánh, tên, năm sinh, năm mất, người liên hệ.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,500&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="band">
+  <div class="band-in">
+    <svg class="candle" viewBox="0 0 34 56" aria-hidden="true">
+      <g class="flame"><path d="M17 4c4 6 6 9 6 13a6 6 0 0 1-12 0c0-4 2-7 6-13z" fill="#e0b45a"/><path d="M17 10c2 3 3 5 3 7a3 3 0 0 1-6 0c0-2 1-4 3-7z" fill="#fff4d6"/></g>
+      <line x1="17" y1="22" x2="17" y2="26" stroke="#cbbfe0" stroke-width="1.5"/>
+      <rect x="10" y="26" width="14" height="28" rx="2" fill="#f4eefc"/>
+    </svg>
+    <div class="titles">
+      <div class="parish" id="parishView" hidden><b id="parishName"></b><span id="parishAddr"></span></div>
+      <h1>CẦU NGUYỆN CHO CÁC LINH HỒN<span class="sep">✝</span><span class="sub">TÌM VỊ TRÍ HÀI CỐT THÂN NHÂN</span></h1>
+      <div class="verse"><q id="verseText"></q><cite id="verseRef"></cite></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <form class="panel" id="searchForm" autocomplete="off">
+    <div class="qrow">
+      <div class="qwrap">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Gõ tùy ý: tên, tên thánh, năm mất, mã số…" aria-label="Tìm kiếm tự do">
+      </div>
+      <button class="btn primary" type="submit">Tìm</button>
+      <button class="btn" type="button" id="clearSearch">Xóa tìm kiếm</button>
+    </div>
+    <p class="hint">Có thể gõ nhiều từ cùng lúc, ví dụ <i>“Anna Lang 2026”</i> hoặc <i>“Phêrô Tâm”</i>. Không cần gõ dấu.</p>
+    <button class="toggle" type="button" id="toggleFilters" aria-expanded="false">▸ Lọc chi tiết theo từng mục</button>
+    <div class="filters" id="filters" hidden>
+      <div class="field"><label for="f_tenThanh">Tên thánh</label><input id="f_tenThanh" data-k="tenThanh"></div>
+      <div class="field"><label for="f_hoTen">Họ tên người đã khuất</label><input id="f_hoTen" data-k="hoTen"></div>
+      <div class="field"><label for="f_namSinh">Năm sinh</label><input id="f_namSinh" data-k="namSinh" placeholder="1935 hoặc 1930-1940" inputmode="numeric"></div>
+      <div class="field"><label for="f_namMat">Năm mất</label><input id="f_namMat" data-k="namMat" placeholder="2026 hoặc 2020-2026" inputmode="numeric"></div>
+      <div class="field"><label for="f_lienHe">Người liên hệ</label><input id="f_lienHe" data-k="lienHe"></div>
+      <div class="field"><label for="f_sdt">Số điện thoại</label><input id="f_sdt" data-k="sdt" inputmode="tel" placeholder="Các số đầu"></div>
+      <div class="field"><label for="f_diaChi">Địa chỉ</label><input id="f_diaChi" data-k="diaChi"></div>
+      <div class="field"><label for="f_viTri">Mã số (vị trí)</label><input id="f_viTri" data-k="viTri" placeholder="vd: B.24"></div>
+    </div>
+  </form>
+
+  <div class="status"><span id="count">Đang tải danh sách…</span><span id="updated"></span></div>
+  <div class="results" id="results"></div>
+</main>
+
+<footer>“Lạy Chúa, xin cho các linh hồn được nghỉ yên muôn đời. Amen.”</footer>
+
+<script src="common.js"></script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const FIELDS=["tenThanh","hoTen","namSinh","namMat","viTri","lienHe","sdt","diaChi","ghiChu"];
+let DATA={verse:{text:"",ref:""},parish:{},rows:[]}, ROWS=[], loadError=false;
+
+function index(rows){return rows.map(r=>{
+  const o={};FIELDS.forEach(k=>o[k]=String(r[k]??"").trim());
+  o.sdt=maskPhones(o.sdt);                 // phòng khi file chưa được che
+  o._hay=norm(FIELDS.filter(k=>k!=="sdt").map(k=>o[k]).join(" | "));
+  o._dig=digits(o.sdt); o._ys=year(o.namSinh); o._ym=year(o.namMat);
+  return o;})}
+
+async function load(){
+  try{
+    const r=await fetch("data.json?v="+Date.now(),{cache:"no-store"});
+    if(!r.ok) throw 0;
+    DATA=await r.json();
+  }catch(e){loadError=true;}
+  ROWS=index(DATA.rows||[]); renderHeader(DATA);
+  if(DATA.updated){const d=new Date(DATA.updated);if(!isNaN(d))$("updated").textContent="Cập nhật: "+d.toLocaleDateString("vi-VN");}
+  run();
+}
+
+function yearMatch(want,y){
+  want=want.replace(/\s/g,""); if(!want) return true; if(y==null) return false;
+  const m=want.match(/^(\d{4})[-–](\d{4})$/); if(m) return y>=+m[1]&&y<=+m[2];
+  return String(y).startsWith(want);
+}
+function tokenMatch(t,r){
+  if(/^\d+$/.test(t)){
+    if(t.length===4 && (r._ys==+t||r._ym==+t)) return true;
+    if(t.length>=4 && r._dig.includes(t)) return true;
+  }
+  return r._hay.includes(t);
+}
+function run(){
+  const q=norm($("q").value); const toks=q?q.split(" "):[];
+  const f={}; document.querySelectorAll("#filters input").forEach(i=>{if(i.value.trim()) f[i.dataset.k]=i.value.trim()});
+  const any=toks.length||Object.keys(f).length;
+  const out=!any?[]:ROWS.filter(r=>{
+    if(!toks.every(t=>tokenMatch(t,r))) return false;
+    for(const k in f){const v=f[k];
+      if(k==="namSinh"){if(!yearMatch(v,r._ys)) return false;}
+      else if(k==="namMat"){if(!yearMatch(v,r._ym)) return false;}
+      else if(k==="sdt"){const d=digits(v); if(d && !r._dig.startsWith(d) && !r._dig.includes(d)) return false;}
+      else if(k==="tenThanh"||k==="hoTen"){if(!norm(r.tenThanh+" "+r.hoTen).includes(norm(v))) return false;}
+      else if(!norm(r[k]).includes(norm(v))) return false;}
+    return true;});
+  render(out,any,toks,f);
+}
+function hl(text,terms){
+  const s=String(text??""); if(!terms.length||!s) return esc(s);
+  const n=norm(s); if(n.length!==s.length) return esc(s);
+  const marks=new Array(s.length).fill(false);
+  terms.forEach(t=>{if(!t||/^\d+$/.test(t)&&t.length<4)return;let i=n.indexOf(t);while(i>-1){for(let j=i;j<i+t.length;j++)marks[j]=true;i=n.indexOf(t,i+t.length);}});
+  let o="",on=false;for(let i=0;i<s.length;i++){if(marks[i]!==on){o+=marks[i]?"<mark>":"</mark>";on=marks[i];}o+=esc(s[i]);}return o+(on?"</mark>":"");
+}
+function render(list,any,toks,f){
+  const box=$("results"),total=ROWS.length,fmt=n=>n.toLocaleString("vi-VN");
+  if(loadError){$("count").textContent="Chưa tải được danh sách";box.innerHTML=`<div class="empty"><p class="pray">Không tải được dữ liệu.</p><p>Hãy kiểm tra kết nối mạng rồi tải lại trang.</p></div>`;return;}
+  if(!total){$("count").textContent="Chưa có dữ liệu";box.innerHTML=`<div class="empty"><p class="pray">Danh sách đang được cập nhật.</p><p>Xin vui lòng quay lại sau.</p></div>`;return;}
+  if(!any){$("count").innerHTML=`Danh sách có <b>${fmt(total)}</b> người`;
+    box.innerHTML=`<div class="empty"><p class="pray">“Xin cho các linh hồn được nghỉ yên muôn đời.”</p><p>Nhập tên, tên thánh, năm mất hoặc mã số để tìm vị trí hài cốt.</p></div>`;return;}
+  $("count").innerHTML=`Tìm thấy <b>${fmt(list.length)}</b> / ${fmt(total)} người`;
+  if(!list.length){box.innerHTML=`<div class="empty"><p class="pray">Không tìm thấy kết quả phù hợp.</p><p>Thử bớt một từ, gõ không dấu, hoặc chỉ nhập tên và năm mất.</p></div>`;return;}
+  const terms=toks.concat(Object.keys(f).filter(k=>!["namSinh","namMat","sdt"].includes(k)).map(k=>norm(f[k])));
+  const LIM=200;
+  box.innerHTML=list.slice(0,LIM).map(r=>`
+    <article class="card">
+      <div class="who">
+        ${r.tenThanh?`<div class="saint">${hl(r.tenThanh,terms)}</div>`:""}
+        <div class="name">${hl(r.hoTen||"(không rõ tên)",terms)}</div>
+        <div class="years">${r.namSinh?"Sinh "+esc(r.namSinh):""}${r.namSinh&&r.namMat?'<span class="cross">✝</span>':""}${r.namMat?"Mất "+esc(r.namMat):""}</div>
+      </div>
+      <div class="loc"><small>Mã số · Vị trí hài cốt</small><strong>${hl(r.viTri||"Chưa ghi",terms)}</strong></div>
+      ${(r.lienHe||r.sdt||r.diaChi||r.ghiChu)?`<div class="meta">
+        ${r.lienHe?`<span>Liên hệ: <b>${hl(r.lienHe,terms)}</b></span>`:""}
+        ${r.sdt?`<span>ĐT: <b>${esc(r.sdt)}</b></span>`:""}
+        ${r.diaChi?`<span>Địa chỉ: <b>${hl(r.diaChi,terms)}</b></span>`:""}
+        ${r.ghiChu?`<span>Ghi chú: <b>${esc(r.ghiChu)}</b></span>`:""}
+      </div>`:""}
+    </article>`).join("")+(list.length>LIM?`<p class="hint" style="text-align:center">Đang hiện ${LIM} kết quả đầu. Hãy thêm năm mất hoặc tên thánh để thu hẹp.</p>`:"");
+}
+
+let timer;
+$("q").addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(run,150)});
+$("filters").addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(run,150)});
+$("searchForm").addEventListener("submit",e=>{e.preventDefault();run()});
+$("clearSearch").onclick=()=>{$("q").value="";document.querySelectorAll("#filters input").forEach(i=>i.value="");run();$("q").focus()};
+$("toggleFilters").onclick=()=>{const f=$("filters");f.hidden=!f.hidden;$("toggleFilters").setAttribute("aria-expanded",!f.hidden);$("toggleFilters").textContent=(f.hidden?"▸ ":"▾ ")+"Lọc chi tiết theo từng mục";};
+load();
+})();
+</script>
+</body>
+</html>

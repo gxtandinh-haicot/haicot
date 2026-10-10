@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Quản Lý Dữ Liệu Hài Cốt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,500&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<header class="band">
+  <div class="band-in">
+    <svg class="candle" viewBox="0 0 34 56" aria-hidden="true">
+      <g class="flame"><path d="M17 4c4 6 6 9 6 13a6 6 0 0 1-12 0c0-4 2-7 6-13z" fill="#e0b45a"/><path d="M17 10c2 3 3 5 3 7a3 3 0 0 1-6 0c0-2 1-4 3-7z" fill="#fff4d6"/></g>
+      <line x1="17" y1="22" x2="17" y2="26" stroke="#cbbfe0" stroke-width="1.5"/>
+      <rect x="10" y="26" width="14" height="28" rx="2" fill="#f4eefc"/>
+    </svg>
+    <div class="titles">
+      <div class="parish" id="parishView" hidden><b id="parishName"></b><span id="parishAddr"></span></div>
+      <h1>CẦU NGUYỆN CHO CÁC LINH HỒN<span class="sep">✝</span><span class="sub">TÌM VỊ TRÍ HÀI CỐT THÂN NHÂN</span></h1>
+      <div class="verse"><q id="verseText"></q><cite id="verseRef"></cite></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="panel">
+    <h2>Quản lý dữ liệu</h2>
+    <p class="hint">Trang này chỉ xử lý file trên máy của Cha, không gửi dữ liệu đi đâu. Kết quả là một file <code>data.json</code> để tải lên trang web. Số điện thoại được che 3 số cuối trước khi xuất file.</p>
+    <p class="hint" id="current"></p>
+  </div>
+
+  <section class="panel">
+    <h2><span class="step">1</span>Thanh tiêu đề</h2>
+    <div class="filters" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">
+      <div class="field"><label for="pName">Tên giáo xứ</label><input id="pName" placeholder="vd: Giáo xứ Tân Định"></div>
+      <div class="field"><label for="pAddr">Địa chỉ giáo xứ</label><input id="pAddr" placeholder="Số nhà, đường, phường, tỉnh/thành"></div>
+    </div>
+    <div class="field"><label for="vText">Câu Lời Chúa</label><textarea id="vText" rows="2"></textarea></div>
+    <div class="field" style="max-width:260px"><label for="vRef">Trích dẫn</label><input id="vRef" placeholder="vd: Ga 11,25"></div>
+  </section>
+
+  <section class="panel">
+    <h2><span class="step">2</span>Dữ liệu từ file Excel</h2>
+    <label class="drop" id="drop" for="file">Bấm để chọn hoặc kéo thả file Excel xuất từ hệ thống (<b>.xlsx / .xls / .csv</b>)</label>
+    <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden>
+    <p class="hint">Cột nhận được: STT · MÃ SỐ · NGƯỜI ĐÃ KHUẤT (gồm tên thánh) · NGÀY SINH · NGÀY MẤT · LIÊN HỆ · SỐ ĐIỆN THOẠI · ĐỊA CHỈ. Nạp file mới sẽ <b>thay toàn bộ</b> danh sách cũ.</p>
+    <div id="dataMsg"></div>
+    <div id="preview"></div>
+    <div class="row">
+      <button class="btn danger" id="clearData" type="button">Xóa dữ liệu cũ</button>
+    </div>
+    <div class="confirm" id="confirmBox" hidden>
+      <span>Xóa toàn bộ <b id="confirmN"></b> người khỏi danh sách? File <code>data.json</code> xuất ra sẽ không còn ai. Tiêu đề được giữ nguyên.</span>
+      <div class="row"><button class="btn danger solid" id="confirmYes" type="button">Xóa hẳn</button><button class="btn" id="confirmNo" type="button">Hủy</button></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2><span class="step">3</span>Xuất file và đưa lên trang web</h2>
+    <div class="row"><button class="btn gold" id="exportBtn" type="button">Tải file data.json</button><span class="hint" id="exportInfo"></span></div>
+    <ol class="howto">
+      <li>Vào kho GitHub của trang web, bấm <b>Add file → Upload files</b>.</li>
+      <li>Kéo file <code>data.json</code> vừa tải vào (ghi đè file cũ), bấm <b>Commit changes</b>.</li>
+      <li>Chờ 1–2 phút rồi mở trang tra cứu để kiểm tra.</li>
+    </ol>
+  </section>
+</main>
+<footer>“Lạy Chúa, xin cho các linh hồn được nghỉ yên muôn đời. Amen.”</footer>
+
+<script src="common.js"></script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const DEFAULT_VERSE={text:"Ta là sự sống lại và là sự sống. Ai tin vào Ta, thì dù đã chết, cũng sẽ được sống.",ref:"Ga 11,25"};
+let rows=[], source="", touched=false;
+
+function state(){
+  return {parish:{name:$("pName").value.trim(),address:$("pAddr").value.trim()},
+          verse:{text:$("vText").value.trim(),ref:$("vRef").value.trim()},
+          rows, source, updated:new Date().toISOString()};
+}
+function refresh(){ renderHeader(state()); $("exportInfo").textContent=`Sẽ xuất ${rows.length.toLocaleString("vi-VN")} người.`; }
+["pName","pAddr","vText","vRef"].forEach(id=>$(id).addEventListener("input",refresh));
+
+/* Nạp file data.json đang có trên trang để giữ tiêu đề và danh sách cũ */
+(async()=>{
+  let d=null;
+  try{const r=await fetch("data.json?v="+Date.now(),{cache:"no-store"}); if(r.ok) d=await r.json();}catch(e){}
+  d=d||{};
+  const p=d.parish||{}, v=d.verse||DEFAULT_VERSE;
+  $("pName").value=p.name||""; $("pAddr").value=p.address||"";
+  $("vText").value=v.text||""; $("vRef").value=v.ref||"";
+  if(!touched){ rows=(d.rows||[]).map(r=>Object.assign({},r,{sdt:maskPhones(r.sdt)})); source=d.source||""; }
+  $("current").textContent=d.rows?`Dữ liệu đang có trên trang: ${d.rows.length.toLocaleString("vi-VN")} người${d.updated?", cập nhật "+new Date(d.updated).toLocaleDateString("vi-VN"):""}.`:"Chưa thấy file data.json trên trang (bình thường nếu mở trang này từ máy tính).";
+  showPreview(); refresh();
+})();
+
+/* ---------- Đọc Excel ---------- */
+function mapHeader(h){
+  const n=norm(h); if(!n) return null;
+  if(/ten thanh/.test(n) && /\bho\b|ten nguoi|ten tuc/.test(n.replace(/ten thanh/,""))) return "hoTen";
+  if(/ten thanh|thanh danh|bon mang/.test(n)) return "tenThanh";
+  if(/dien thoai|^sdt|^dt\b|so dt|phone|di dong/.test(n)) return "sdt";
+  if(/dia chi/.test(n)) return "diaChi";
+  if(/lien he|than nhan|nguoi nha|dai dien/.test(n)) return "lienHe";
+  if(/nam sinh|ngay sinh|^sinh/.test(n)) return "namSinh";
+  if(/nam mat|ngay mat|^mat|qua doi|tu tran|tu nan|chet/.test(n)) return "namMat";
+  if(/ghi chu/.test(n)) return "ghiChu";
+  if(/vi tri|^ma so|^ma$|^ma (hai cot|vi tri|mo|hoc)/.test(n)) return "viTri";
+  if(/^(stt|so thu tu|tt)$/.test(n)) return null;
+  if(/^(khu|day|tang|o|o so|so o|hoc|so hoc|hang|lo)$/.test(n)) return "pos:"+String(h).trim();
+  if(/ho ten|ho va ten|ten nguoi|^ten$|ten tuc|da khuat|nguoi mat|qua co|nguoi chet|^nguoi$/.test(n)) return "hoTen";
+  return null;
+}
+const HO=new Set(("nguyen tran le pham hoang huynh phan vu vo dang bui do ho ngo duong ly dinh trinh truong lam mai dao doan luong luu cao chau ta tang thai ton quach giang kieu la lai mac lu nghiem nong quan tieu trieu thach thanh tong van vuong ha han hua khuu kha ung uong diep danh au tu chu chung dong").split(" "));
+const THANH=new Set(("giuse maria phero phaolo anna teresa terexa gioan antoninh anton martino daminh micae giacobe anre phanxico matheu mattheu luca macco marco toma lucia ane agnes catarina catherine cecilia xesilia rosa monica isave elisabeth clara gioakim inhaxio augustino vinhson matta marta mattha batotolomeo philipphe simon giuda tadeo stephano gabriel raphael gioanna veronica agata maddalena madalena lucas mathia barnaba benedicto bernado gregorio leo anphongso dominico louis luy carolo carlo giorgio emmanuel giusetina martina").split(" "));
+function splitName(full){
+  const w=String(full).trim().split(/\s+/); if(w.length<2) return {tenThanh:"",hoTen:full};
+  const n=w.map(norm);
+  if(HO.has(n[0]) && !THANH.has(n[0])) return {tenThanh:"",hoTen:w.join(" ")};
+  for(let i=1;i<w.length-1;i++){ if(HO.has(n[i])) return {tenThanh:w.slice(0,i).join(" "),hoTen:w.slice(i).join(" ")}; }
+  if(THANH.has(n[0])) return {tenThanh:w[0],hoTen:w.slice(1).join(" ")};
+  return {tenThanh:"",hoTen:w.join(" ")};
+}
+function parseSheet(sheet){
+  let hi=-1,map=[];
+  for(let i=0;i<Math.min(sheet.length,12);i++){
+    const m=sheet[i].map(mapHeader); if(m.filter(Boolean).length>=2 && m.includes("hoTen")){hi=i;map=m;break;}
+  }
+  if(hi<0) return [];
+  const out=[];
+  for(const row of sheet.slice(hi+1)){
+    const o={};const pos=[];
+    map.forEach((k,c)=>{const v=String(row[c]??"").trim(); if(!k||!v) return;
+      if(k.startsWith("pos:")){const lab=k.slice(4);pos.push(norm(v).startsWith(norm(lab))?v:lab+" "+v);}
+      else o[k]=o[k]?o[k]+" "+v:v;});
+    if(pos.length) o.viTri=(o.viTri?o.viTri+" · ":"")+pos.join(" · ");
+    if(o.sdt){ if(/^\d{9}$/.test(o.sdt)) o.sdt="0"+o.sdt; o.sdt=maskPhones(o.sdt); }
+    if(!map.includes("tenThanh") && o.hoTen){const s=splitName(o.hoTen);o.tenThanh=s.tenThanh;o.hoTen=s.hoTen;}
+    if(o.hoTen||o.tenThanh) out.push(o);
+  }
+  return out;
+}
+async function readFile(file){
+  const msg=$("dataMsg");
+  try{
+    if(!window.XLSX) throw new Error("Chưa tải được thư viện đọc Excel. Hãy kiểm tra mạng rồi tải lại trang.");
+    const wb=XLSX.read(await file.arrayBuffer(),{type:"array",cellDates:true});
+    let got=[];
+    for(const name of wb.SheetNames) got=got.concat(parseSheet(XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,raw:false,defval:"",dateNF:"dd/mm/yyyy"})));
+    if(!got.length) throw new Error("Không đọc được dòng nào. File cần có dòng tiêu đề với cột NGƯỜI ĐÃ KHUẤT (hoặc Họ tên).");
+    rows=got; source=file.name; touched=true;
+    const noPos=rows.filter(r=>!r.viTri).length;
+    msg.innerHTML=`<div class="msg ok">Đọc được <b>${rows.length.toLocaleString("vi-VN")}</b> người từ “${esc(file.name)}”.${noPos?` Có ${noPos} dòng chưa ghi mã số.`:""} Danh sách cũ sẽ được thay khi Cha xuất file.</div>`;
+    showPreview(); refresh();
+  }catch(e){ msg.innerHTML=`<div class="msg err">${esc(e.message)}</div>`; }
+}
+function showPreview(){
+  if(!rows.length){$("preview").innerHTML=`<p class="hint">Danh sách đang trống.</p>`;return;}
+  const head=["Mã số","Tên thánh","Họ tên","Ngày sinh","Ngày mất","Liên hệ","Điện thoại","Địa chỉ"];
+  const keys=["viTri","tenThanh","hoTen","namSinh","namMat","lienHe","sdt","diaChi"];
+  $("preview").innerHTML=`<p class="hint">Xem trước 8 dòng đầu (điện thoại đã che):</p><div class="tbl"><table><thead><tr>${head.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${
+    rows.slice(0,8).map(r=>`<tr>${keys.map(k=>`<td class="${k==='sdt'||k==='viTri'?'num':''}">${esc(r[k]||"")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+$("file").addEventListener("change",e=>{const f=e.target.files[0];if(f)readFile(f);e.target.value=""});
+const drop=$("drop");
+["dragover","dragenter"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add("over")}));
+["dragleave","drop"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove("over")}));
+drop.addEventListener("drop",e=>{const f=e.dataTransfer.files[0];if(f)readFile(f)});
+
+$("clearData").onclick=()=>{$("confirmN").textContent=rows.length.toLocaleString("vi-VN");$("confirmBox").hidden=false};
+$("confirmNo").onclick=()=>{$("confirmBox").hidden=true};
+$("confirmYes").onclick=()=>{rows=[];source="";touched=true;$("confirmBox").hidden=true;
+  $("dataMsg").innerHTML=`<div class="msg ok">Đã xóa dữ liệu cũ. Cha có thể nạp file Excel mới, hoặc xuất file trống.</div>`;showPreview();refresh();};
+
+$("exportBtn").onclick=()=>{
+  const d=state(); if(!d.verse.text) d.verse=DEFAULT_VERSE;
+  d.rows=d.rows.map(r=>Object.assign({},r,{sdt:maskPhones(r.sdt)}));   // chắc chắn đã che
+  const blob=new Blob([JSON.stringify(d)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="data.json";
+  document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+};
+})();
+</script>
+</body>
+</html>
