@@ -25,3 +25,13 @@ function renderHeader(D){
   document.getElementById("verseRef").textContent=(D.verse&&D.verse.ref)?"("+D.verse.ref+")":"";
   if(p.name) document.title="Tìm Vị Trí Hài Cốt · "+p.name;
 }
+
+/* Năm phụng vụ trên Nến Phục sinh: đổi sang năm mới từ Lễ Phục Sinh */
+(function(){
+  function easter(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+    h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+    mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1; return new Date(y,mo-1,da);}
+  const now=new Date(), y=now<easter(now.getFullYear())?now.getFullYear()-1:now.getFullYear();
+  const d=String(y).split("");
+  document.querySelectorAll(".candle").forEach(svg=>svg.querySelectorAll(".c-yr").forEach((t,i)=>{t.textContent=d[i]||"";}));
+})();

@@ -116,7 +116,7 @@ code{background:var(--accent-soft);padding:1px 6px;border-radius:4px;font-size:1
 /* Hàng trên: nến + tên giáo xứ (bên trái). Dưới: tiêu đề và Lời Chúa trải hết bề ngang, căn giữa */
 .band-in{display:block}
 .toprow{display:flex;gap:12px;align-items:center;margin-bottom:12px}
-.toprow .candle{width:32px;height:58px;margin:0;flex:none}
+.toprow .candle{width:40px;height:94px;margin:0;flex:none}
 .toprow .parish{flex:1;min-width:0;margin:0;padding-bottom:6px;justify-content:flex-start;text-align:left}
 h1{text-align:center}
 .verse{justify-content:center;align-items:baseline;text-align:center}
