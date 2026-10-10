@@ -98,3 +98,11 @@ footer{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:0 32px;co
 .tbl td.num{font-variant-numeric:tabular-nums}
 ol.howto{margin:0;padding-left:20px;display:grid;gap:4px}
 code{background:var(--accent-soft);padding:1px 6px;border-radius:4px;font-size:13px}
+
+/* Nến và tên giáo xứ bên trái; tiêu đề, Lời Chúa và lời nguyện cuối trang căn giữa */
+.parish{justify-content:flex-start;text-align:left}
+h1{text-align:center}
+.verse{justify-content:center;align-items:baseline;text-align:center}
+.verse cite{align-self:auto}
+@media (min-width:560px){ h1,.verse{margin-right:50px} }  /* bù bề rộng ngọn nến để nằm giữa trang */
+footer{text-align:center}

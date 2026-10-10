@@ -35,7 +35,6 @@
       <button class="btn primary" type="submit">Tìm</button>
       <button class="btn" type="button" id="clearSearch">Xóa tìm kiếm</button>
     </div>
-    <p class="hint">Chữ cuối cùng được hiểu là <b>tên gọi</b>: gõ <i>“Hưng”</i> chỉ ra người tên Hưng, không ra người có Hưng ở họ hay tên lót. Có thể gõ thêm tên thánh, họ, năm mất: <i>“Phêrô Tâm 2026”</i>. Gõ có dấu thì tìm đúng dấu; gõ không dấu (<i>Hung</i>) sẽ ra cả Hưng, Hùng.</p>
     <button class="toggle" type="button" id="toggleFilters" aria-expanded="false">▸ Lọc chi tiết theo từng mục</button>
     <div class="filters" id="filters" hidden>
       <div class="field"><label for="f_tenThanh">Tên thánh</label><input id="f_tenThanh" data-k="tenThanh"></div>
@@ -162,7 +161,7 @@ function render(list,any,toks,f){
   $("count").innerHTML=`Tìm thấy <b>${fmt(list.length)}</b> / ${fmt(total)} người`+
     (MODE==="given"&&nameTok&&list.length?` có tên gọi <b>${esc(nameTok)}</b>`:"")+
     (MODE==="loose"?` — <span style="color:var(--gold-ink)">không có ai tên gọi là “${esc(nameTok)}”, đang hiện người có chữ này ở họ, tên lót hoặc địa chỉ</span>`:"");
-  if(!list.length){box.innerHTML=`<div class="empty"><p class="pray">Không tìm thấy kết quả phù hợp.</p><p>Thử gõ không dấu (vd: <i>Hung</i> sẽ ra cả Hưng, Hùng), bớt một từ, hoặc chỉ nhập tên và năm mất.</p></div>`;return;}
+  if(!list.length){box.innerHTML=`<div class="empty"><p class="pray">Không tìm thấy kết quả phù hợp.</p><p>Thử gõ không dấu, bớt một từ, hoặc chỉ nhập tên và năm mất.</p></div>`;return;}
   const fTerms=["ten","hoTen","tenThanh","lienHe","diaChi","viTri"].filter(k=>f[k]).flatMap(k=>splitWords(f[k]));
   const terms=toks.concat(fTerms);
   const restTerms=MODE==="given"?toks.filter(t=>t!==nameTok).concat(fTerms):terms;
