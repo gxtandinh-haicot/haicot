@@ -113,4 +113,7 @@ footer{text-align:center}
   h1{font-size:clamp(12px,4.1vw,18px);letter-spacing:.03em}
   h1 .l1,h1 .sub{display:block;white-space:nowrap}
   h1 .sep{display:none}
+  /* Thánh giá riêng một dòng, giữa tiêu đề và Lời Chúa */
+  h1::after{content:"✝";display:block;color:var(--gold);font-size:22px;line-height:1;margin-top:10px;letter-spacing:0}
+  .verse{margin-top:8px}
 }
