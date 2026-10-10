@@ -26,6 +26,11 @@
 </header>
 
 <main>
+  <button class="gal-open" id="galOpen" type="button" hidden>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5.5-5.5L5 20"/></svg>
+    <span>Hình ảnh Nhà chờ Phục sinh</span><small id="galCount"></small>
+  </button>
+
   <form class="panel" id="searchForm" autocomplete="off">
     <div class="qrow">
       <div class="qwrap">
@@ -54,6 +59,22 @@
 </main>
 
 <footer>“Lạy Chúa, xin cho các linh hồn được nghỉ yên muôn đời. Amen.”</footer>
+
+<!-- Thư viện ảnh Nhà chờ Phục sinh -->
+<div class="gal" id="gal" hidden role="dialog" aria-modal="true" aria-labelledby="galTitle">
+  <div class="gal-bar">
+    <h2 id="galTitle">Nhà chờ Phục sinh</h2>
+    <button class="btn" id="galClose" type="button">Đóng</button>
+  </div>
+  <div class="gal-grid" id="galGrid"><p class="hint">Đang tải hình ảnh…</p></div>
+</div>
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true">
+  <button class="lb-x" id="lbClose" type="button" aria-label="Đóng">✕</button>
+  <button class="lb-nav prev" id="lbPrev" type="button" aria-label="Ảnh trước">‹</button>
+  <figure><img id="lbImg" alt=""><figcaption id="lbCap"></figcaption></figure>
+  <button class="lb-nav next" id="lbNext" type="button" aria-label="Ảnh sau">›</button>
+</div>
+<script src="gallery.js"></script>
 
 <script src="common.js"></script>
 <script>

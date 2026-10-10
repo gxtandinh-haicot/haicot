@@ -68,6 +68,24 @@
       <li>Chờ 1–2 phút rồi mở trang tra cứu để kiểm tra.</li>
     </ol>
   </section>
+
+  <section class="panel">
+    <h2><span class="step">4</span>Hình ảnh Nhà chờ Phục sinh</h2>
+    <p class="hint">Tối đa <b>12 ảnh</b>. Ảnh được tự thu nhỏ để trang mở nhanh trên điện thoại. Mục này độc lập với danh sách: lưu ra file riêng <code>hinh-anh.json</code>.</p>
+    <div class="row">
+      <label class="btn primary" for="phFile" id="phAddBtn">+ Thêm ảnh</label>
+      <input type="file" id="phFile" accept="image/jpeg,image/png,image/webp" multiple hidden>
+      <span class="hint" id="phInfo"></span>
+    </div>
+    <div id="phMsg"></div>
+    <div class="ph-grid" id="phGrid"></div>
+    <div class="row"><button class="btn gold" id="phExport" type="button">Tải file hinh-anh.json</button></div>
+    <ol class="howto">
+      <li>Bấm <b>Tải file hinh-anh.json</b>.</li>
+      <li>Vào kho GitHub, bấm <b>Add file → Upload files</b>, kéo file <code>hinh-anh.json</code> vào (ghi đè file cũ), bấm <b>Commit changes</b>.</li>
+      <li>Muốn gỡ hết ảnh: xóa từng ảnh rồi tải file lên như trên. Nút xem ảnh trên trang vẫn còn nhưng sẽ báo chưa có hình.</li>
+    </ol>
+  </section>
 </main>
 <footer>“Lạy Chúa, xin cho các linh hồn được nghỉ yên muôn đời. Amen.”</footer>
 
@@ -182,6 +200,74 @@ $("exportBtn").onclick=()=>{
   d.rows=d.rows.map(r=>Object.assign({},r,{sdt:maskPhones(r.sdt)}));   // chắc chắn đã che
   const blob=new Blob([JSON.stringify(d)],{type:"application/json"});
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="data.json";
+  document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+};
+})();
+</script>
+<script>
+/* ---------- Quản lý ảnh Nhà chờ Phục sinh ---------- */
+(function(){
+const $=id=>document.getElementById(id);
+const MAX=12, SIDE=1400, Q=0.8;
+let photos=[];
+
+(async()=>{
+  try{const r=await fetch("hinh-anh.json?v="+Date.now(),{cache:"no-store"}); if(r.ok) photos=((await r.json()).photos||[]).slice(0,MAX);}catch(e){}
+  draw();
+})();
+
+function kb(s){return Math.round(s.length*3/4/1024);}   // ước lượng dung lượng từ chuỗi base64
+function draw(){
+  const total=photos.reduce((a,p)=>a+kb(p.src),0);
+  $("phInfo").textContent=`${photos.length}/${MAX} ảnh · khoảng ${(total/1024).toFixed(1)} MB`;
+  $("phAddBtn").style.display=photos.length>=MAX?"none":"";
+  $("phGrid").innerHTML=photos.length?photos.map((p,i)=>`
+    <div class="ph">
+      <img src="${p.src}" alt="">
+      <div class="ph-body">
+        <input value="${esc(p.caption||"")}" data-i="${i}" placeholder="Chú thích (không bắt buộc)" aria-label="Chú thích ảnh ${i+1}">
+        <div class="row">
+          <button class="btn" type="button" data-mv="-1" data-i="${i}" ${i===0?"disabled":""} aria-label="Đưa lên trước">◀</button>
+          <button class="btn" type="button" data-mv="1" data-i="${i}" ${i===photos.length-1?"disabled":""} aria-label="Đưa ra sau">▶</button>
+          <button class="btn danger" type="button" data-del="${i}">Xóa</button>
+        </div>
+      </div>
+    </div>`).join(""):`<p class="hint">Chưa có ảnh nào.</p>`;
+}
+$("phGrid").addEventListener("input",e=>{ if(e.target.dataset.i!=null && e.target.tagName==="INPUT") photos[+e.target.dataset.i].caption=e.target.value; });
+$("phGrid").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  if(b.dataset.del!=null){ photos.splice(+b.dataset.del,1); draw(); }
+  else if(b.dataset.mv){ const i=+b.dataset.i, j=i+(+b.dataset.mv); [photos[i],photos[j]]=[photos[j],photos[i]]; draw(); }
+});
+
+function shrink(file){
+  return new Promise((ok,bad)=>{
+    const url=URL.createObjectURL(file), img=new Image();
+    img.onload=()=>{
+      const k=Math.min(1,SIDE/Math.max(img.naturalWidth,img.naturalHeight));
+      const c=document.createElement("canvas"); c.width=Math.round(img.naturalWidth*k); c.height=Math.round(img.naturalHeight*k);
+      const g=c.getContext("2d"); g.fillStyle="#fff"; g.fillRect(0,0,c.width,c.height); g.drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url); ok(c.toDataURL("image/jpeg",Q));
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url); bad(new Error(file.name));};
+    img.src=url;
+  });
+}
+$("phFile").addEventListener("change",async e=>{
+  const files=[...e.target.files]; e.target.value="";
+  const room=MAX-photos.length, take=files.slice(0,room), fail=[];
+  $("phMsg").innerHTML=`<div class="msg ok">Đang xử lý ${take.length} ảnh…</div>`;
+  for(const f of take){ try{ photos.push({src:await shrink(f),caption:""}); }catch(err){ fail.push(f.name); } }
+  draw();
+  const notes=[];
+  if(files.length>room) notes.push(`Chỉ thêm được ${room} ảnh vì giới hạn ${MAX} ảnh.`);
+  if(fail.length) notes.push(`Không đọc được: ${fail.map(esc).join(", ")}. Ảnh HEIC của iPhone cần chuyển sang JPG trước.`);
+  $("phMsg").innerHTML=notes.length?`<div class="msg err">${notes.join(" ")}</div>`:`<div class="msg ok">Đã thêm ảnh. Nhớ bấm “Tải file hinh-anh.json” để đưa lên trang.</div>`;
+});
+$("phExport").onclick=()=>{
+  const blob=new Blob([JSON.stringify({updated:new Date().toISOString(),photos:photos.slice(0,MAX)})],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="hinh-anh.json";
   document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
 };
 })();
