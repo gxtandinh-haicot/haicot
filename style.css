@@ -99,10 +99,18 @@ footer{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:0 32px;co
 ol.howto{margin:0;padding-left:20px;display:grid;gap:4px}
 code{background:var(--accent-soft);padding:1px 6px;border-radius:4px;font-size:13px}
 
-/* Nến và tên giáo xứ bên trái; tiêu đề, Lời Chúa và lời nguyện cuối trang căn giữa */
-.parish{justify-content:flex-start;text-align:left}
+/* Hàng trên: nến + tên giáo xứ (bên trái). Dưới: tiêu đề và Lời Chúa trải hết bề ngang, căn giữa */
+.band-in{display:block}
+.toprow{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.toprow .candle{width:28px;height:46px;margin:0}
+.toprow .parish{flex:1;min-width:0;margin:0;padding-bottom:6px;justify-content:flex-start;text-align:left}
 h1{text-align:center}
 .verse{justify-content:center;align-items:baseline;text-align:center}
 .verse cite{align-self:auto}
-@media (min-width:560px){ h1,.verse{margin-right:50px} }  /* bù bề rộng ngọn nến để nằm giữa trang */
 footer{text-align:center}
+/* Điện thoại: tiêu đề tách 2 dòng, mỗi dòng nằm gọn trên một hàng */
+@media (max-width:600px){
+  h1{font-size:clamp(12px,4.1vw,18px);letter-spacing:.03em}
+  h1 .l1,h1 .sub{display:block;white-space:nowrap}
+  h1 .sep{display:none}
+}
