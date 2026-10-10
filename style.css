@@ -25,9 +25,23 @@ button,input,textarea{font:inherit;color:inherit}
   background:radial-gradient(circle,rgba(224,180,90,.28),transparent 65%);pointer-events:none}
 .band-in{max-width:980px;margin:0 auto;display:flex;gap:16px;align-items:flex-start;position:relative;z-index:1}
 .candle{flex:none;width:34px;height:56px;margin-top:2px}
-.flame{transform-origin:17px 18px;animation:flick 2.6s ease-in-out infinite}
-@keyframes flick{0%,100%{transform:scale(1,1)}40%{transform:scale(.92,1.06)}70%{transform:scale(1.05,.95)}}
-@media (prefers-reduced-motion:reduce){.flame{animation:none}}
+/* Ngọn nến đang cháy: lửa lắc lư, lõi chập chờn, quầng sáng phập phồng */
+.candle{overflow:visible}
+.c-flame{transform-box:fill-box;transform-origin:50% 92%;animation:cSway 2.2s ease-in-out infinite}
+.c-core{transform-box:fill-box;transform-origin:50% 100%;animation:cCore 1.1s ease-in-out infinite alternate}
+.c-glow{transform-box:fill-box;transform-origin:50% 50%;animation:cGlow 2.8s ease-in-out infinite}
+@keyframes cSway{
+  0%{transform:rotate(-2deg) scale(1,1)}
+  15%{transform:rotate(1.5deg) scale(.96,1.07)}
+  30%{transform:rotate(-1deg) scale(1.03,.95)}
+  45%{transform:rotate(2.5deg) scale(.97,1.05)}
+  60%{transform:rotate(-2.5deg) scale(1.02,.97)}
+  75%{transform:rotate(1deg) scale(.95,1.08)}
+  90%{transform:rotate(-1.5deg) scale(1.01,.98)}
+  100%{transform:rotate(-2deg) scale(1,1)}}
+@keyframes cCore{0%{transform:scale(1,.9);opacity:.85}100%{transform:scale(.92,1.1);opacity:1}}
+@keyframes cGlow{0%,100%{transform:scale(.9);opacity:.65}35%{transform:scale(1.06);opacity:.95}60%{transform:scale(.96);opacity:.75}80%{transform:scale(1.1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.c-flame,.c-core{animation:none}.c-glow{animation-duration:6s}}
 .titles{min-width:0;flex:1}
 .parish{display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline;margin:0 0 8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.14)}
 .parish b{font-family:var(--display);font-weight:600;font-size:clamp(17px,2.6vw,22px);color:var(--band-ink)}
@@ -102,7 +116,7 @@ code{background:var(--accent-soft);padding:1px 6px;border-radius:4px;font-size:1
 /* Hàng trên: nến + tên giáo xứ (bên trái). Dưới: tiêu đề và Lời Chúa trải hết bề ngang, căn giữa */
 .band-in{display:block}
 .toprow{display:flex;gap:12px;align-items:center;margin-bottom:12px}
-.toprow .candle{width:28px;height:46px;margin:0}
+.toprow .candle{width:32px;height:58px;margin:0;flex:none}
 .toprow .parish{flex:1;min-width:0;margin:0;padding-bottom:6px;justify-content:flex-start;text-align:left}
 h1{text-align:center}
 .verse{justify-content:center;align-items:baseline;text-align:center}
