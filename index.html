@@ -60,22 +60,30 @@
 </header>
 
 <main>
-  <button class="gal-open" id="galOpen" type="button" hidden>
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5.5-5.5L5 20"/></svg>
-    <span>Hình ảnh Nhà chờ Phục sinh</span><small id="galCount"></small>
-  </button>
-
   <div class="tabs" role="tablist" aria-label="Chọn mục">
-    <button class="tab" id="tabSearch" role="tab" aria-selected="true" aria-controls="paneSearch" type="button">Tìm vị trí</button>
-    <button class="tab" id="tabGio" role="tab" aria-selected="false" aria-controls="paneGio" type="button">Giỗ hôm nay <span class="tab-n" id="gioBadge" hidden></span></button>
+    <button class="tab" id="tabSearch" role="tab" aria-selected="true" aria-controls="paneSearch" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span>Tìm vị trí</span>
+    </button>
+    <button class="tab" id="tabGio" role="tab" aria-selected="false" aria-controls="paneGio" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c2 3 3 4.6 3 6.2a3 3 0 0 1-6 0C9 6.6 10 5 12 2z"/><path d="M9.5 12h5v10h-5z"/></svg>
+      <span>Nhớ các linh hồn nhân ngày giỗ <b class="tab-date" id="tabGioDate"></b></span>
+      <i class="tab-n" id="gioBadge" hidden></i>
+    </button>
+    <button class="tab" id="tabGal" role="tab" aria-selected="false" aria-controls="paneGal" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5.5-5.5L5 20"/></svg>
+      <span>Hình ảnh Nhà chờ Phục sinh</span>
+    </button>
   </div>
 
   <section class="pane" id="paneGio" role="tabpanel" aria-labelledby="tabGio" hidden>
+    <div class="gio-banner">
+      <div class="gio-orn" aria-hidden="true"><span></span><svg viewBox="0 0 24 32"><path d="M10.4 0h3.2v9.4H22v3.2h-8.4V32h-3.2V12.6H2V9.4h8.4z"/></svg><span></span></div>
+      <p class="gio-plea1">“Xin đừng quên chúng tôi”</p>
+      <p class="gio-plea2" id="gioPlea2">Cộng đoàn hiệp ý cầu nguyện cho các linh hồn có ngày giỗ hôm nay</p>
+      <div class="gio-orn small" aria-hidden="true"><span></span><i>❦</i><span></span></div>
+    </div>
     <div class="panel gio-head">
-      <div class="gio-plea">
-        <p class="gio-plea1">“Xin đừng quên chúng tôi”</p>
-        <p class="gio-plea2" id="gioPlea2">Cộng đoàn hiệp ý cầu nguyện cho các linh hồn có ngày giỗ hôm nay</p>
-      </div>
       <div class="gio-date">
         <button class="btn" id="gioPrev" type="button" aria-label="Ngày trước">‹</button>
         <div class="gio-day"><b id="gioDayName"></b><span id="gioDayFull"></span></div>
@@ -90,6 +98,11 @@
     </div>
     <div class="status"><span id="gioCount"></span></div>
     <div class="results" id="gioList"></div>
+  </section>
+
+  <section class="pane" id="paneGal" role="tabpanel" aria-labelledby="tabGal" hidden>
+    <div class="gal-head"><h2>Nhà chờ Phục sinh</h2><p class="hint" id="galNote"></p></div>
+    <div class="gal-grid" id="galGrid"><p class="hint">Đang tải hình ảnh…</p></div>
   </section>
 
   <section class="pane" id="paneSearch" role="tabpanel" aria-labelledby="tabSearch">
@@ -123,21 +136,12 @@
 
 <footer>“Lạy Chúa, xin cho các linh hồn được nghỉ yên muôn đời. Amen.”</footer>
 
-<!-- Thư viện ảnh Nhà chờ Phục sinh -->
-<div class="gal" id="gal" hidden role="dialog" aria-modal="true" aria-labelledby="galTitle">
-  <div class="gal-bar">
-    <h2 id="galTitle">Nhà chờ Phục sinh</h2>
-    <button class="btn" id="galClose" type="button">Đóng</button>
-  </div>
-  <div class="gal-grid" id="galGrid"><p class="hint">Đang tải hình ảnh…</p></div>
-</div>
 <div class="lb" id="lb" hidden role="dialog" aria-modal="true">
   <button class="lb-x" id="lbClose" type="button" aria-label="Đóng">✕</button>
   <button class="lb-nav prev" id="lbPrev" type="button" aria-label="Ảnh trước">‹</button>
   <figure><img id="lbImg" alt=""><figcaption id="lbCap"></figcaption></figure>
   <button class="lb-nav next" id="lbNext" type="button" aria-label="Ảnh sau">›</button>
 </div>
-<script src="gallery.js"></script>
 
 <script src="common.js"></script>
 <script>
@@ -202,6 +206,7 @@ function renderGio(){
   const today=startOfDay(new Date()), isToday=+gioDate===+today;
   const list=gioFor(gioDate), nToday=isToday?list.length:gioFor(today).length;
   $("gioBadge").textContent=nToday; $("gioBadge").hidden=!nToday;
+  $("tabGioDate").textContent=`(${today.getDate()}/${today.getMonth()+1})`;
   $("gioDayName").textContent=isToday?"Hôm nay":WD[gioDate.getDay()];
   $("gioDayFull").textContent=`${WD[gioDate.getDay()]}, ngày ${gioDate.getDate()} tháng ${gioDate.getMonth()+1} năm ${gioDate.getFullYear()}`;
   $("gioPick").value=iso(gioDate); $("gioToday").hidden=isToday;
@@ -228,19 +233,20 @@ function renderGio(){
     </article>`;}).join("")
     : `<div class="empty"><p class="pray">“Xin cho các linh hồn được nghỉ yên muôn đời.”</p><p>Không có ai trong danh sách có ngày giỗ ${isToday?"hôm nay":"vào ngày này"}.</p>${noDate?`<p class="hint">${noDate.toLocaleString("vi-VN")} người chỉ ghi năm mất, chưa có đủ ngày tháng nên chưa hiện ở đây.</p>`:""}</div>`;
 }
+const TABS={search:["tabSearch","paneSearch",""],gio:["tabGio","paneGio","#gio"],anh:["tabGal","paneGal","#anh"]};
 function setTab(t){
-  const g=t==="gio";
-  $("paneGio").hidden=!g; $("paneSearch").hidden=g;
-  $("tabGio").setAttribute("aria-selected",g); $("tabSearch").setAttribute("aria-selected",!g);
-  try{history.replaceState(null,"",g?"#gio":location.pathname+location.search);}catch(e){}
+  for(const k in TABS){const [tb,pn]=TABS[k]; $(pn).hidden=k!==t; $(tb).setAttribute("aria-selected",k===t);}
+  if(t==="anh" && window.openGallery) window.openGallery();
+  try{history.replaceState(null,"",TABS[t][2]||location.pathname+location.search);}catch(e){}
 }
 $("tabSearch").onclick=()=>setTab("search");
 $("tabGio").onclick=()=>{gioDate=startOfDay(new Date());renderGio();setTab("gio");};
+$("tabGal").onclick=()=>setTab("anh");
 $("gioPrev").onclick=()=>{gioDate=new Date(gioDate.getFullYear(),gioDate.getMonth(),gioDate.getDate()-1);renderGio();};
 $("gioNext").onclick=()=>{gioDate=new Date(gioDate.getFullYear(),gioDate.getMonth(),gioDate.getDate()+1);renderGio();};
 $("gioToday").onclick=()=>{gioDate=startOfDay(new Date());renderGio();};
 $("gioPick").onchange=e=>{const v=e.target.value; if(!v)return; const [y,m,d]=v.split("-").map(Number); gioDate=new Date(y,m-1,d); renderGio();};
-if(location.hash==="#gio") setTab("gio");
+if(location.hash==="#gio") setTab("gio"); else if(location.hash==="#anh") setTab("anh");
 // Qua nửa đêm khi trang vẫn mở: tự chuyển sang ngày mới
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden && $("gioToday").hidden && +gioDate!==+startOfDay(new Date())){gioDate=startOfDay(new Date());renderGio();} });
 
@@ -347,5 +353,6 @@ $("toggleFilters").onclick=()=>{const f=$("filters");f.hidden=!f.hidden;$("toggl
 load();
 })();
 </script>
+<script src="gallery.js"></script>
 </body>
 </html>
