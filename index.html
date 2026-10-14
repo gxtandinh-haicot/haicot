@@ -65,6 +65,34 @@
     <span>Hình ảnh Nhà chờ Phục sinh</span><small id="galCount"></small>
   </button>
 
+  <div class="tabs" role="tablist" aria-label="Chọn mục">
+    <button class="tab" id="tabSearch" role="tab" aria-selected="true" aria-controls="paneSearch" type="button">Tìm vị trí</button>
+    <button class="tab" id="tabGio" role="tab" aria-selected="false" aria-controls="paneGio" type="button">Giỗ hôm nay <span class="tab-n" id="gioBadge" hidden></span></button>
+  </div>
+
+  <section class="pane" id="paneGio" role="tabpanel" aria-labelledby="tabGio" hidden>
+    <div class="panel gio-head">
+      <div class="gio-plea">
+        <p class="gio-plea1">“Xin đừng quên chúng tôi”</p>
+        <p class="gio-plea2" id="gioPlea2">Cộng đoàn hiệp ý cầu nguyện cho các linh hồn có ngày giỗ hôm nay</p>
+      </div>
+      <div class="gio-date">
+        <button class="btn" id="gioPrev" type="button" aria-label="Ngày trước">‹</button>
+        <div class="gio-day"><b id="gioDayName"></b><span id="gioDayFull"></span></div>
+        <button class="btn" id="gioNext" type="button" aria-label="Ngày sau">›</button>
+      </div>
+      <div class="row gio-tools">
+        <label class="hint" for="gioPick">Xem ngày khác:</label>
+        <input type="date" id="gioPick">
+        <button class="btn" id="gioToday" type="button" hidden>Về hôm nay</button>
+      </div>
+      <p class="gio-pray" id="gioPray"></p>
+    </div>
+    <div class="status"><span id="gioCount"></span></div>
+    <div class="results" id="gioList"></div>
+  </section>
+
+  <section class="pane" id="paneSearch" role="tabpanel" aria-labelledby="tabSearch">
   <form class="panel" id="searchForm" autocomplete="off">
     <div class="qrow">
       <div class="qwrap">
@@ -90,6 +118,7 @@
 
   <div class="status"><span id="count">Đang tải danh sách…</span><span id="updated"></span></div>
   <div class="results" id="results"></div>
+  </section>
 </main>
 
 <footer>“Lạy Chúa, xin cho các linh hồn được nghỉ yên muôn đời. Amen.”</footer>
@@ -132,7 +161,16 @@ function index(rows){return rows.map(r=>{
   o._dig=digits(o.sdt); o._ys=year(o.namSinh); o._ym=year(o.namMat);
   const nw=splitWords(o.hoTen); o._given=nw.length?nw[nw.length-1]:"";   // tên gọi = chữ cuối
   o._words=["tenThanh","hoTen","lienHe","diaChi","viTri","ghiChu"].flatMap(k=>splitWords(o[k]));
+  const dm=parseDMY(o.namMat); if(dm){o._dd=dm.d;o._mm=dm.m;o._yy=dm.y;}
   return o;})}
+/* Đọc ngày mất dạng 28/9/2026, 28-09-2026, 28.9.2026 hoặc 2026-09-28 */
+function parseDMY(s){
+  s=String(s||""); let m=s.match(/(\d{1,2})\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{4})/);
+  let d,mo,y; if(m){d=+m[1];mo=+m[2];y=+m[3];}
+  else if((m=s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/))){y=+m[1];mo=+m[2];d=+m[3];}
+  else return null;
+  return (d>=1&&d<=31&&mo>=1&&mo<=12)?{d,m:mo,y}:null;
+}
 const hasWord=(tok,r)=>r._words.some(w=>sameWord(tok,w));
 const isGiven=(tok,r)=>!!r._given&&sameWord(tok,r._given);
 
@@ -144,8 +182,67 @@ async function load(){
   }catch(e){loadError=true;}
   ROWS=index(DATA.rows||[]); renderHeader(DATA);
   if(DATA.updated){const d=new Date(DATA.updated);if(!isNaN(d))$("updated").textContent="Cập nhật: "+d.toLocaleDateString("vi-VN");}
-  run();
+  run(); renderGio();
 }
+
+/* ---------- Tab Ngày giỗ ---------- */
+const startOfDay=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate());
+let gioDate=startOfDay(new Date());
+const isLeap=y=>(y%4===0&&y%100!==0)||y%400===0;
+const WD=["Chủ nhật","Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy"];
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+function gioFor(date){
+  const D=date.getDate(), M=date.getMonth()+1, Y=date.getFullYear();
+  const feb28=(M===2&&D===28&&!isLeap(Y));            // người mất 29/2 được nhớ vào 28/2 năm thường
+  return ROWS.filter(r=>r._dd&&r._yy<Y&&r._mm===M&&(r._dd===D||(feb28&&r._dd===29)))
+             .sort((a,b)=>b._yy-a._yy||a.hoTen.localeCompare(b.hoTen,"vi"));
+}
+function renderGio(){
+  if(loadError) return;
+  const today=startOfDay(new Date()), isToday=+gioDate===+today;
+  const list=gioFor(gioDate), nToday=isToday?list.length:gioFor(today).length;
+  $("gioBadge").textContent=nToday; $("gioBadge").hidden=!nToday;
+  $("gioDayName").textContent=isToday?"Hôm nay":WD[gioDate.getDay()];
+  $("gioDayFull").textContent=`${WD[gioDate.getDay()]}, ngày ${gioDate.getDate()} tháng ${gioDate.getMonth()+1} năm ${gioDate.getFullYear()}`;
+  $("gioPick").value=iso(gioDate); $("gioToday").hidden=isToday;
+  $("gioPlea2").textContent="Cộng đoàn hiệp ý cầu nguyện cho các linh hồn có ngày giỗ "+(isToday?"hôm nay":`ngày ${gioDate.getDate()}/${gioDate.getMonth()+1}`);
+  $("gioPray").textContent=list.length
+    ? "Lạy Chúa, xin cho các linh hồn tôi tớ Chúa có tên dưới đây được nghỉ yên muôn đời, và ánh sáng ngàn thu chiếu soi cho các linh hồn ấy. Amen."
+    : "";
+  const noDate=ROWS.filter(r=>r.namMat&&!r._dd).length;
+  $("gioCount").innerHTML=list.length
+    ? `<b>${list.length}</b> linh hồn có ngày giỗ ${isToday?"hôm nay":"ngày này"}`
+    : "";
+  if(!ROWS.length){$("gioList").innerHTML=`<div class="empty"><p class="pray">Danh sách đang được cập nhật.</p></div>`;return;}
+  $("gioList").innerHTML=list.length?list.map(r=>{
+    const n=gioDate.getFullYear()-r._yy;
+    return `<article class="card">
+      <div class="who">
+        ${r.tenThanh?`<div class="saint">${esc(r.tenThanh)}</div>`:""}
+        <div class="name">${esc(r.hoTen||"(không rõ tên)")}</div>
+        <div class="years">${r.namSinh?"Sinh "+esc(r.namSinh):""}${r.namSinh?'<span class="cross">✝</span>':""}Mất ${esc(r.namMat)}</div>
+        <span class="gio-tag">${n===1?"Giỗ đầu":"Giỗ năm thứ "+n}</span>
+      </div>
+      <div class="loc"><small>Mã số · Vị trí hài cốt</small><strong>${esc(r.viTri||"Chưa ghi")}</strong></div>
+      ${r.lienHe?`<div class="meta"><span>Thân nhân: <b>${esc(r.lienHe)}</b></span></div>`:""}
+    </article>`;}).join("")
+    : `<div class="empty"><p class="pray">“Xin cho các linh hồn được nghỉ yên muôn đời.”</p><p>Không có ai trong danh sách có ngày giỗ ${isToday?"hôm nay":"vào ngày này"}.</p>${noDate?`<p class="hint">${noDate.toLocaleString("vi-VN")} người chỉ ghi năm mất, chưa có đủ ngày tháng nên chưa hiện ở đây.</p>`:""}</div>`;
+}
+function setTab(t){
+  const g=t==="gio";
+  $("paneGio").hidden=!g; $("paneSearch").hidden=g;
+  $("tabGio").setAttribute("aria-selected",g); $("tabSearch").setAttribute("aria-selected",!g);
+  try{history.replaceState(null,"",g?"#gio":location.pathname+location.search);}catch(e){}
+}
+$("tabSearch").onclick=()=>setTab("search");
+$("tabGio").onclick=()=>{gioDate=startOfDay(new Date());renderGio();setTab("gio");};
+$("gioPrev").onclick=()=>{gioDate=new Date(gioDate.getFullYear(),gioDate.getMonth(),gioDate.getDate()-1);renderGio();};
+$("gioNext").onclick=()=>{gioDate=new Date(gioDate.getFullYear(),gioDate.getMonth(),gioDate.getDate()+1);renderGio();};
+$("gioToday").onclick=()=>{gioDate=startOfDay(new Date());renderGio();};
+$("gioPick").onchange=e=>{const v=e.target.value; if(!v)return; const [y,m,d]=v.split("-").map(Number); gioDate=new Date(y,m-1,d); renderGio();};
+if(location.hash==="#gio") setTab("gio");
+// Qua nửa đêm khi trang vẫn mở: tự chuyển sang ngày mới
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden && $("gioToday").hidden && +gioDate!==+startOfDay(new Date())){gioDate=startOfDay(new Date());renderGio();} });
 
 function yearMatch(want,y){
   want=want.replace(/\s/g,""); if(!want) return true; if(y==null) return false;

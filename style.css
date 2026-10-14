@@ -160,3 +160,25 @@ footer{text-align:center}
 .ph input{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font-size:13px}
 .ph .row{gap:4px}
 .ph .btn{padding:4px 8px;font-size:12px}
+
+/* Tab: Tìm vị trí / Ngày giỗ hôm nay */
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.tab{border:0;background:transparent;border-radius:9px;padding:11px 8px;font-weight:600;font-size:15px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--surface)}
+.tab-n{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--gold);color:#241a06;font-size:12px;font-variant-numeric:tabular-nums}
+.pane{display:grid;gap:18px}
+.gio-head{text-align:center}
+.gio-date{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.gio-date .btn{font-size:22px;line-height:1;padding:8px 14px}
+.gio-day{display:grid;gap:2px;min-width:0}
+.gio-day b{font-family:var(--display);font-size:24px}
+.gio-day span{color:var(--muted);font-size:14px}
+.gio-tools{justify-content:center}
+.gio-tools input{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.gio-pray{margin:0;font-family:var(--display);font-style:italic;font-size:17px;line-height:1.5;color:var(--ink);max-width:56ch;justify-self:center}
+.gio-pray:empty{display:none}
+.gio-tag{display:inline-block;margin-top:6px;padding:2px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:600;letter-spacing:.03em}
+.gio-plea{display:grid;gap:4px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.gio-plea p{margin:0;text-wrap:balance}
+.gio-plea1{font-family:var(--display);font-style:italic;font-weight:600;font-size:clamp(24px,6vw,30px);color:var(--accent);line-height:1.25}
+.gio-plea2{font-size:15px;font-weight:500;color:var(--ink)}
