@@ -7,7 +7,7 @@
 <meta name="description" content="Cầu nguyện cho các linh hồn – tra cứu vị trí hài cốt thân nhân theo tên thánh, tên, năm sinh, năm mất, người liên hệ.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,500&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=202610140823">
 </head>
 <body>
 <header class="band">
@@ -62,16 +62,16 @@
 <main>
   <div class="tabs" role="tablist" aria-label="Chọn mục">
     <button class="tab" id="tabSearch" role="tab" aria-selected="true" aria-controls="paneSearch" type="button">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <span>Tìm vị trí</span>
     </button>
     <button class="tab" id="tabGio" role="tab" aria-selected="false" aria-controls="paneGio" type="button">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c2 3 3 4.6 3 6.2a3 3 0 0 1-6 0C9 6.6 10 5 12 2z"/><path d="M9.5 12h5v10h-5z"/></svg>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2c2 3 3 4.6 3 6.2a3 3 0 0 1-6 0C9 6.6 10 5 12 2z"/><path d="M9.5 12h5v10h-5z"/></svg>
       <span>Nhớ các linh hồn nhân ngày giỗ <b class="tab-date" id="tabGioDate"></b></span>
       <i class="tab-n" id="gioBadge" hidden></i>
     </button>
     <button class="tab" id="tabGal" role="tab" aria-selected="false" aria-controls="paneGal" type="button">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5.5-5.5L5 20"/></svg>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5.5-5.5L5 20"/></svg>
       <span>Hình ảnh Nhà chờ Phục sinh</span>
     </button>
   </div>
@@ -143,7 +143,8 @@
   <button class="lb-nav next" id="lbNext" type="button" aria-label="Ảnh sau">›</button>
 </div>
 
-<script src="common.js"></script>
+<script src="common.js?v=202610140823"></script>
+<script src="tuongnho.js?v=202610140823"></script>
 <script>
 (function(){
 const $=id=>document.getElementById(id);
@@ -230,8 +231,10 @@ function renderGio(){
       </div>
       <div class="loc"><small>Mã số · Vị trí hài cốt</small><strong>${esc(r.viTri||"Chưa ghi")}</strong></div>
       ${r.lienHe?`<div class="meta"><span>Thân nhân: <b>${esc(r.lienHe)}</b></span></div>`:""}
+      ${window.TN?TN.html(tnKey(r),tnName(r)):""}
     </article>`;}).join("")
     : `<div class="empty"><p class="pray">“Xin cho các linh hồn được nghỉ yên muôn đời.”</p><p>Không có ai trong danh sách có ngày giỗ ${isToday?"hôm nay":"vào ngày này"}.</p>${noDate?`<p class="hint">${noDate.toLocaleString("vi-VN")} người chỉ ghi năm mất, chưa có đủ ngày tháng nên chưa hiện ở đây.</p>`:""}</div>`;
+  if(window.TN) TN.mount($("gioList"));
 }
 const TABS={search:["tabSearch","paneSearch",""],gio:["tabGio","paneGio","#gio"],anh:["tabGal","paneGal","#anh"]};
 function setTab(t){
@@ -341,7 +344,9 @@ function render(list,any,toks,f){
         ${r.diaChi?`<span>Địa chỉ: <b>${hl(r.diaChi,restTerms)}</b></span>`:""}
         ${r.ghiChu?`<span>Ghi chú: <b>${esc(r.ghiChu)}</b></span>`:""}
       </div>`:""}
+      ${window.TN?TN.html(tnKey(r),tnName(r)):""}
     </article>`).join("")+(list.length>LIM?`<p class="hint" style="text-align:center">Đang hiện ${LIM} kết quả đầu. Hãy thêm năm mất hoặc tên thánh để thu hẹp.</p>`:"");
+  if(window.TN) TN.mount(box);
 }
 
 let timer;
@@ -353,6 +358,6 @@ $("toggleFilters").onclick=()=>{const f=$("filters");f.hidden=!f.hidden;$("toggl
 load();
 })();
 </script>
-<script src="gallery.js"></script>
+<script src="gallery.js?v=202610140823"></script>
 </body>
 </html>

@@ -35,3 +35,12 @@ function renderHeader(D){
   const d=String(y).split("");
   document.querySelectorAll(".candle").forEach(svg=>svg.querySelectorAll(".c-yr").forEach((t,i)=>{t.textContent=d[i]||"";}));
 })();
+
+/* Mã định danh ổn định cho mỗi người đã khuất (dùng cho lượt thắp nến, tặng hoa…) */
+function tnKey(r){
+  const s=norm((r.tenThanh||"")+" "+(r.hoTen||""))+"|"+norm(r.viTri)+"|"+norm(r.namMat);
+  let h1=0x811c9dc5, h2=0x01000193;
+  for(let i=0;i<s.length;i++){const c=s.charCodeAt(i); h1=Math.imul(h1^c,16777619)>>>0; h2=Math.imul(h2^c,2246822519)>>>0;}
+  return "p"+h1.toString(36)+h2.toString(36);
+}
+const tnName=r=>((r.tenThanh?r.tenThanh+" ":"")+(r.hoTen||"")).trim();

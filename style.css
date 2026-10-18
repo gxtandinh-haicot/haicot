@@ -200,3 +200,28 @@ footer{text-align:center}
 /* Tab ảnh */
 .gal-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px}
 .gal-head h2{font-family:var(--display);font-size:24px;margin:0}
+
+/* Tưởng nhớ: Thắp nến · Tặng hoa · Thả tim · Cầu nguyện */
+.tn{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.tn-b{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 6px;border:1px solid var(--line);border-radius:999px;
+  background:var(--bg);color:var(--ink);font-size:13px;font-weight:500;cursor:pointer;transition:transform .12s,border-color .15s,background .15s;min-width:0}
+.tn-b:hover{border-color:var(--gold)}
+.tn-b:active{transform:scale(.95)}
+.tn-e{font-size:16px;line-height:1}
+.tn-l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tn-b.on{background:var(--gold-soft);border-color:var(--gold);color:var(--gold-ink)}
+.tn-b.shake{animation:tnShake .35s}
+@keyframes tnShake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+@media (max-width:560px){
+  .tn-b{flex-direction:column;gap:2px;padding:7px 2px;border-radius:12px;font-size:11.5px}
+  .tn-e{font-size:19px}
+}
+.tn-fx{position:fixed;z-index:80;pointer-events:none;transform:translate(-50%,-50%);animation:tnFly 1.6s ease-out forwards;opacity:0}
+@keyframes tnFly{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}
+  15%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}
+  100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(var(--rot)) scale(.9)}}
+.tn-toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:90;transform:translate(-50%,20px);opacity:0;
+  max-width:min(92vw,460px);padding:12px 18px;border-radius:12px;background:var(--band);color:var(--band-ink);border:1px solid var(--gold);
+  font-size:14px;line-height:1.45;text-align:center;box-shadow:0 10px 30px -12px rgba(0,0,0,.5);transition:opacity .25s,transform .25s;pointer-events:none}
+.tn-toast.show{opacity:1;transform:translate(-50%,0)}
