@@ -15,14 +15,51 @@ function maskPhone(s){
 /* Một ô có thể chứa nhiều số: "0909 123 456 - 0918 222 333" */
 function maskPhones(s){ return String(s??"").replace(/(?<![\d*][ .]?)\d(?:[ .]?\d){5,}(?![ .]?[\d*])/g, m=>maskPhone(m)); }
 
+/* Bộ câu Lời Chúa gợi ý: dùng khi data.json chưa có danh sách riêng.
+   Người quản lý đối chiếu và sửa lời văn theo bản dịch giáo xứ dùng ở trang quản lý. */
+const DEFAULT_VERSES=[
+  {text:"Ta là sự sống lại và là sự sống. Ai tin vào Ta, thì dù đã chết, cũng sẽ được sống.",ref:"Ga 11,25"},
+  {text:"Ý của Cha tôi là tất cả những ai thấy người Con và tin vào người Con, thì được sống muôn đời, và tôi sẽ cho họ sống lại trong ngày sau hết.",ref:"Ga 6,40"},
+  {text:"Trong nhà Cha Thầy, có nhiều chỗ ở. Thầy đi dọn chỗ cho anh em.",ref:"Ga 14,2"},
+  {text:"Linh hồn người công chính ở trong tay Thiên Chúa, và chẳng cực hình nào động tới được nữa.",ref:"Kn 3,1"},
+  {text:"Dù sống, dù chết, chúng ta vẫn thuộc về Chúa.",ref:"Rm 14,8"},
+  {text:"Hỡi tử thần, chiến thắng của ngươi đâu? Hỡi tử thần, nọc độc của ngươi đâu?",ref:"1 Cr 15,55"},
+  {text:"Người sẽ lau sạch nước mắt họ. Sẽ không còn sự chết; cũng chẳng còn tang tóc, kêu than và đau khổ nữa.",ref:"Kh 21,4"},
+  {text:"Lạy Chúa, dầu qua lũng âm u, con sợ gì nguy khốn, vì có Chúa ở cùng.",ref:"Tv 22,4"},
+  {text:"Cầu nguyện cho người đã chết để họ được giải thoát khỏi tội lỗi, là một ý nghĩ đạo đức và thánh thiện.",ref:"2 Mcb 12,45"},
+  {text:"Nếu hạt lúa gieo vào lòng đất mà không chết đi, thì nó vẫn trơ trọi một mình; còn nếu nó chết đi, thì nó mới sinh được nhiều hạt khác.",ref:"Ga 12,24"},
+  {text:"Quê hương chúng ta ở trên trời, và chúng ta nóng lòng mong đợi Đức Giêsu Kitô từ trời đến cứu chúng ta.",ref:"Pl 3,20"},
+  {text:"Phúc thay ai sầu khổ, vì họ sẽ được Thiên Chúa ủi an.",ref:"Mt 5,4"}
+];
+/* Danh sách đang dùng: data.json có "verses" thì dùng; chưa có thì câu cũ (nếu có) + bộ gợi ý */
+function versePool(D){
+  const ok=v=>v&&String(v.text||"").trim();
+  if(Array.isArray(D.verses)&&D.verses.filter(ok).length) return D.verses.filter(ok);
+  const pool=DEFAULT_VERSES.slice();
+  if(ok(D.verse)&&!pool.some(v=>v.text===D.verse.text)) pool.unshift(D.verse);
+  return pool;
+}
+/* Chọn ngẫu nhiên một câu mỗi lần tải trang, tránh lặp lại câu vừa hiện */
+let _pickedVerse=null;
+function pickVerse(pool){
+  if(_pickedVerse&&pool.some(v=>v.text===_pickedVerse.text)) return _pickedVerse;
+  if(!pool.length) return null;
+  let last=""; try{last=localStorage.getItem("lastVerse")||"";}catch(e){}
+  const choices=pool.length>1?pool.filter(v=>v.text!==last):pool;
+  _pickedVerse=choices[Math.floor(Math.random()*choices.length)];
+  try{localStorage.setItem("lastVerse",_pickedVerse.text);}catch(e){}
+  return _pickedVerse;
+}
+
 function renderHeader(D){
   const p=D.parish||{};
   const pv=document.getElementById("parishView");
   document.getElementById("parishName").textContent=p.name||"";
   document.getElementById("parishAddr").textContent=p.address||"";
   pv.hidden=!(p.name||p.address);
-  document.getElementById("verseText").textContent=(D.verse&&D.verse.text)||"";
-  document.getElementById("verseRef").textContent=(D.verse&&D.verse.ref)?"("+D.verse.ref+")":"";
+  const v=D._verseShown||pickVerse(versePool(D));
+  document.getElementById("verseText").textContent=(v&&v.text)||"";
+  document.getElementById("verseRef").textContent=(v&&v.ref)?"("+v.ref+")":"";
   if(p.name) document.title="Tìm Vị Trí Hài Cốt · "+p.name;
 }
 

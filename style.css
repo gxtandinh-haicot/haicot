@@ -242,3 +242,15 @@ footer{text-align:center}
 #qrCanvas{width:100%;height:auto;border-radius:8px;border:1px solid var(--line)}
 .qr-url{margin:0;font-size:13px;color:var(--muted);word-break:break-all}
 .qr-act{justify-content:center}
+
+/* Danh sách câu Lời Chúa (trang quản lý) */
+.vlist{display:grid;gap:8px}
+.vitem{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,180px) auto;gap:8px;align-items:start;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.vitem textarea,.vitem input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.vnum{display:grid;place-items:center;width:26px;height:26px;margin-top:6px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:13px;font-weight:700}
+.vitem .btn{padding:8px 12px}
+@media (max-width:560px){.vitem{grid-template-columns:auto minmax(0,1fr)}.vitem input{grid-column:2}.vitem .btn{grid-column:2;justify-self:start}}
+/* Câu Lời Chúa hiện ra nhẹ nhàng */
+#verseText,#verseRef{animation:vIn .8s ease-out both}
+@keyframes vIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#verseText,#verseRef{animation:none}}
